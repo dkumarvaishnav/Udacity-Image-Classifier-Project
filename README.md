@@ -206,6 +206,3 @@ Udacity-Image-Classifier-Project/
 └── README.md                    # This file
 ```
 
-## Author
-
-Dkuma
