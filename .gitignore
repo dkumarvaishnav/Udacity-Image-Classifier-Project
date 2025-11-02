@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Project specific
+checkpoint.pth
+*.pth
+flowers/
+demo_images/
+
+# OS
+.DS_Store
+Thumbs.db

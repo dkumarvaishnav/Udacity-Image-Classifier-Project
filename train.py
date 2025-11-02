@@ -20,12 +20,12 @@ def arg_parser():
 
 
 def train_transformer(train_dir):
-   train_transforms = transforms.Compose([transforms.RandomRotation(30),
-                                       transforms.RandomResizedCrop(224),
-                                       transforms.RandomHorizontalFlip(),
-                                       transforms.ToTensor(),
-                                       transforms.Normalize([0.485, 0.456, 0.406], 
-                                                            [0.229, 0.224, 0.225])])
+    train_transforms = transforms.Compose([transforms.RandomRotation(30),
+                                        transforms.RandomResizedCrop(224),
+                                        transforms.RandomHorizontalFlip(),
+                                        transforms.ToTensor(),
+                                        transforms.Normalize([0.485, 0.456, 0.406], 
+                                                             [0.229, 0.224, 0.225])])
     train_data = datasets.ImageFolder(train_dir, transform=train_transforms)
     return train_data
 
@@ -65,11 +65,9 @@ def check_gpu(gpu_arg):
 
 
 def primaryloader_model(architecture="vgg16"):
+    model = models.vgg16(pretrained=True)
+    model.name = "vgg16"
     
-    
-        model = models.vgg16(pretrained=True)
-        model.name = "vgg16"
-        
     for param in model.parameters():
         param.requires_grad = False 
     return model
@@ -136,26 +134,26 @@ def network_trainer(Model, Trainloader, Testloader, Device,
             Optimizer.zero_grad()
             
             # Forward and backward passes
-            outputs = model.forward(inputs)
-            loss = criterion(outputs, labels)
+            outputs = Model.forward(inputs)
+            loss = Criterion(outputs, labels)
             loss.backward()
-            optimizer.step()
+            Optimizer.step()
         
             running_loss += loss.item()
         
-            if steps % print_every == 0:
-                model.eval()
+            if Steps % Print_every == 0:
+                Model.eval()
 
                 with torch.no_grad():
-                    valid_loss, accuracy = validation(model, validloader, criterion)
+                    valid_loss, accuracy = validation(Model, Testloader, Criterion, Device)
             
-                print("Epoch: {}/{} | ".format(e+1, epochs),
-                     "Training Loss: {:.4f} | ".format(running_loss/print_every),
-                     "Validation Loss: {:.4f} | ".format(valid_loss/len(testloader)),
-                     "Validation Accuracy: {:.4f}".format(accuracy/len(testloader)))
+                print("Epoch: {}/{} | ".format(e+1, Epochs),
+                     "Training Loss: {:.4f} | ".format(running_loss/Print_every),
+                     "Validation Loss: {:.4f} | ".format(valid_loss/len(Testloader)),
+                     "Validation Accuracy: {:.4f}".format(accuracy/len(Testloader)))
             
                 running_loss = 0
-                model.train()
+                Model.train()
 
     return Model
 
@@ -163,14 +161,14 @@ def network_trainer(Model, Trainloader, Testloader, Device,
 
 #Function validate_model(Model, Testloader, Device) validate the above model on test data images
 def validate_model(Model, Testloader, Device):
-   # Do validation on the test set
+    # Do validation on the test set
     correct,total = 0,0
     with torch.no_grad():
-        model.eval()
-        for data in train_loader:
+        Model.eval()
+        for data in Testloader:
             images, labels = data
-            images, labels = images.to('cuda'), labels.to('cuda')
-            outputs = model(images)
+            images, labels = images.to(Device), labels.to(Device)
+            outputs = Model(images)
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
@@ -186,15 +184,6 @@ def initial_checkpoint(Model, Save_Dir, Train_data):
         print("Model checkpoint directory not specified, model will not be saved.")
     else:
         if isdir(Save_Dir):
-            model.class_to_idx = image_datasets['train'].class_to_idx
-torch.save({'structure' :'alexnet',
-            'hidden_layer1':120,
-             'droupout':0.5,
-             'epochs':12,
-             'state_dict':model.state_dict(),
-             'class_to_idx':model.class_to_idx,
-             'optimizer_dict':optimizer.state_dict()},
-             'checkpoint.pth')
             Model.class_to_idx = Train_data.class_to_idx
             
             # Create checkpoint dictionary
@@ -204,7 +193,7 @@ torch.save({'structure' :'alexnet',
                           'state_dict': Model.state_dict()}
             
             # Save checkpoint
-            torch.save(checkpoint, 'my_checkpoint.pth')
+            torch.save(checkpoint, Save_Dir)
 
         else: 
             print("Directory not found, model will not be saved.")
@@ -221,9 +210,9 @@ def main():
     test_dir = data_dir + '/test'
     
     # Pass transforms in, then create trainloader
-    train_data = test_transformer(train_dir)
-    valid_data = train_transformer(valid_dir)
-    test_data = train_transformer(test_dir)
+    train_data = train_transformer(train_dir)
+    valid_data = test_transformer(valid_dir)
+    test_data = test_transformer(test_dir)
     
     trainloader = data_loader(train_data)
     validloader = data_loader(valid_data, train=False)
